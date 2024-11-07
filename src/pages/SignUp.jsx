@@ -9,9 +9,11 @@ import {
     Stack,
     Text,
 } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../util.js";
+import { useUser } from "../context/UserContext.jsx";
 
 export default function SignUp() {
     const {
@@ -20,8 +22,31 @@ export default function SignUp() {
         formState: { errors, isSubmitting },
     } = useForm();
 
-    const submit = async (_) => {
-        toast.success("Signed up successfully");
+    const { updateUser } = useUser();
+
+    const navigate = useNavigate();
+
+    const submit = async (values) => {
+        try {
+            const resp = await fetch(`${API_BASE_URL}/auth/signup`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(values),
+            });
+            const data = await resp.json();
+            if (resp.status == 200) {
+                updateUser(data);
+                toast.success("Signed up successfully");
+                navigate("/profile");
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error("Something went wrong");
+        }
     };
 
     return (
