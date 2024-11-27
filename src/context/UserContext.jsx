@@ -1,9 +1,10 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext } from "react";
+import { useLocalStorage } from "../util.js";
 
 const UserContext = createContext();
 
 function UserProvider(props) {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useLocalStorage("taskly_user", null);
     const updateUser = setUser;
 
     const value = { user, updateUser };

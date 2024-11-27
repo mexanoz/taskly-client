@@ -110,11 +110,11 @@ export default function SignUp() {
                     </Button>
                 </Stack>
             </form>
-            <Flex gap="2" ml="5">
+            <Flex gap="2" mt="5">
                 <Text>Already have an account?</Text>
                 <Link to={"/signin"}>
                     <Text as="span" color="blue.400">
-                        Войти
+                        Sign in
                     </Text>
                 </Link>
             </Flex>
