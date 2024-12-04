@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { BsArrowUp } from "react-icons/bs";
 import {
     Badge,
     Box,
@@ -16,6 +17,7 @@ import {
     TableContainer,
 } from "@chakra-ui/react";
 import { useUser } from "../context/UserContext";
+import Pagination from "../components/Pagination";
 import TasksSkeleton from "../_skeletons/TasksSkeleton";
 import { API_BASE_URL } from "../util.js";
 
@@ -23,16 +25,40 @@ export default function Tasks() {
     const { user } = useUser();
     const [tasks, setTasks] = useState();
 
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [itemCount, setItemCount] = useState(0);
+    const page = parseInt(searchParams.get("page")) || 1;
+
+    const handleStatusFilter = (e) => {
+        const value = e.target.value;
+        if (value) {
+            searchParams.set("status", value);
+        } else {
+            searchParams.delete("status");
+        }
+        setSearchParams(searchParams);
+    };
+
+    const handleOrderBy = (value) => {
+        searchParams.set("orderBy", value);
+        setSearchParams(searchParams);
+    };
+
     useEffect(() => {
         const fetchTasks = async () => {
-            const res = await fetch(`${API_BASE_URL}/tasks/user/${user._id}`, {
-                credentials: "include",
-            });
-            const { tasks } = await res.json();
+            const query = searchParams.size ? `?${searchParams}` : "";
+            const res = await fetch(
+                `${API_BASE_URL}/tasks/user/${user._id}${query}`,
+                {
+                    credentials: "include",
+                }
+            );
+            const { tasks, taskCount } = await res.json();
             setTasks(tasks);
+            setItemCount(taskCount);
         };
         fetchTasks();
-    }, []);
+    }, [searchParams]);
 
     if (!tasks) {
         return <TasksSkeleton />;
@@ -50,23 +76,61 @@ export default function Tasks() {
             </Heading>
             <Flex justify="space-between" mb="3">
                 <Box w="100px">
-                    <Select placeholder="All">
+                    <Select placeholder="All" onChange={handleStatusFilter}>
                         <option value="open">Open</option>
                         <option value="done">Done</option>
                     </Select>
                 </Box>
                 <Button colorScheme="green" fontWeight="semibold">
-                    <Link to="/create-task">Create new task</Link>
+                    <Link to="/create-task">Create a new task</Link>
                 </Button>
             </Flex>
             <TableContainer>
                 <Table px="3" border="2px solid" borderColor="gray.100">
                     <Thead backgroundColor="gray.100">
                         <Tr>
-                            <Th>Task</Th>
-                            <Th>Priority</Th>
-                            <Th>Status</Th>
-                            <Th>Due date</Th>
+                            <Th>
+                                <Flex
+                                    onClick={() => handleOrderBy("name")}
+                                    cursor="pointer"
+                                >
+                                    Task
+                                    {searchParams.get("orderBy") === "name" && (
+                                        <BsArrowUp />
+                                    )}
+                                </Flex>
+                            </Th>
+                            <Th>
+                                <Flex
+                                    onClick={() => handleOrderBy("priority")}
+                                    cursor="pointer"
+                                >
+                                    Priority
+                                    {searchParams.get("orderBy") ===
+                                        "priority" && <BsArrowUp />}
+                                </Flex>
+                            </Th>
+                            <Th>
+                                <Flex
+                                    onClick={() => handleOrderBy("status")}
+                                    cursor="pointer"
+                                >
+                                    Status
+                                    {searchParams.get("orderBy") ===
+                                        "status" && <BsArrowUp />}
+                                </Flex>
+                            </Th>
+                            <Th>
+                                <Flex
+                                    onClick={() => handleOrderBy("due")}
+                                    cursor="pointer"
+                                >
+                                    Due date
+                                    {searchParams.get("orderBy") === "due" && (
+                                        <BsArrowUp />
+                                    )}
+                                </Flex>
+                            </Th>
                         </Tr>
                     </Thead>
                     <Tbody>
@@ -109,6 +173,7 @@ export default function Tasks() {
                     </Tbody>
                 </Table>
             </TableContainer>
+            <Pagination itemCount={itemCount} pageSize={4} currentPage={page} />
         </Box>
     );
 }
